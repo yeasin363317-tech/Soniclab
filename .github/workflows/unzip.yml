@@ -1,0 +1,34 @@
+name: Unzip SonicLab
+
+on:
+  workflow_dispatch:        # Actions ট্যাব থেকে হাতে চালানোর জন্য
+  push:
+    paths:
+      - 'soniclab.zip'      # zip আপলোড করলেই নিজে চলবে
+
+permissions:
+  contents: write           # ফাইল commit করার অনুমতি
+
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Unzip and move files to repo root
+        run: |
+          if [ ! -f soniclab.zip ]; then
+            echo "soniclab.zip নেই, কিছু করার নেই"
+            exit 0
+          fi
+          unzip -q soniclab.zip -d _tmp
+          cp -a _tmp/soniclab/. .
+          rm -rf _tmp soniclab.zip
+
+      - name: Commit extracted files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet || git commit -m "Unzip SonicLab project"
+          git push
